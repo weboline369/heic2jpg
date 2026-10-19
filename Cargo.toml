@@ -1,0 +1,17 @@
+[package]
+name = "heic2jpg"
+version = "0.1.0"
+edition = "2021"
+description = "Simple macOS HEIC to JPEG converter"
+license = "MIT"
+
+[dependencies]
+eframe = "0.37"
+rfd = "0.15"
+dirs = "6"
+image = "0.25"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
