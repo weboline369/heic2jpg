@@ -10,10 +10,14 @@ use std::sync::mpsc::{self, Receiver};
 use std::sync::Arc;
 use std::thread;
 
-const BULMA_PRIMARY: egui::Color32 = egui::Color32::from_rgb(72, 199, 142);
-const BULMA_PRIMARY_DARK: egui::Color32 = egui::Color32::from_rgb(37, 121, 83);
-const BULMA_BACKGROUND: egui::Color32 = egui::Color32::from_rgb(247, 249, 250);
-const BULMA_BORDER: egui::Color32 = egui::Color32::from_rgb(225, 231, 235);
+// macOS-style semantic palette: one accent for action/selection, quiet neutrals
+// for structure, and no saturated decoration competing with the task.
+const APP_ACCENT: egui::Color32 = egui::Color32::from_rgb(10, 132, 255);
+const APP_ACCENT_DARK: egui::Color32 = egui::Color32::from_rgb(0, 88, 188);
+const APP_BACKGROUND: egui::Color32 = egui::Color32::from_rgb(242, 242, 247);
+const APP_SURFACE: egui::Color32 = egui::Color32::from_rgb(255, 255, 255);
+const APP_BORDER: egui::Color32 = egui::Color32::from_rgb(218, 218, 223);
+const APP_MUTED: egui::Color32 = egui::Color32::from_rgb(99, 99, 102);
 
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 enum AppTab {
@@ -117,20 +121,21 @@ impl Heic2JpgApp {
 impl eframe::App for Heic2JpgApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default()
-            .frame(egui::Frame::new().fill(BULMA_BACKGROUND))
+            .frame(egui::Frame::new().fill(APP_BACKGROUND))
             .show(ui, |ui| {
+                ui.add_space(4.0);
                 ui.horizontal(|ui| {
                     let heic_active = self.active_tab == AppTab::Heic;
                     if ui
                         .add(
-                            egui::Button::new(egui::RichText::new("HEIC → JPG").strong())
+                            egui::Button::new(egui::RichText::new("Convertir").strong())
                                 .fill(if heic_active {
-                                    BULMA_PRIMARY
+                                    APP_ACCENT
                                 } else {
                                     egui::Color32::TRANSPARENT
                                 })
-                                .stroke(egui::Stroke::new(1.0, BULMA_BORDER))
-                                .min_size(egui::vec2(126.0, 34.0)),
+                                .stroke(egui::Stroke::new(1.0, APP_BORDER))
+                                .min_size(egui::vec2(118.0, 32.0)),
                         )
                         .clicked()
                     {
@@ -140,14 +145,14 @@ impl eframe::App for Heic2JpgApp {
                     let webcam_active = self.active_tab == AppTab::Webcam;
                     if ui
                         .add(
-                            egui::Button::new(egui::RichText::new("WEBCAM → JPG").strong())
+                            egui::Button::new(egui::RichText::new("Caméra").strong())
                                 .fill(if webcam_active {
-                                    BULMA_PRIMARY
+                                    APP_ACCENT
                                 } else {
                                     egui::Color32::TRANSPARENT
                                 })
-                                .stroke(egui::Stroke::new(1.0, BULMA_BORDER))
-                                .min_size(egui::vec2(146.0, 34.0)),
+                                .stroke(egui::Stroke::new(1.0, APP_BORDER))
+                                .min_size(egui::vec2(102.0, 32.0)),
                         )
                         .clicked()
                     {
@@ -155,6 +160,7 @@ impl eframe::App for Heic2JpgApp {
                         self.save_settings();
                     }
                 });
+                ui.add_space(8.0);
                 ui.separator();
                 if self.active_tab == AppTab::Heic {
                     self.stop_live_preview();
@@ -165,23 +171,25 @@ impl eframe::App for Heic2JpgApp {
                         egui::Layout::top_down(egui::Align::Min),
                         |ui| {
                             egui::Frame::new()
-                                .fill(egui::Color32::WHITE)
-                                .stroke(egui::Stroke::new(1.0, BULMA_BORDER))
-                                .corner_radius(egui::CornerRadius::same(14))
-                                .inner_margin(egui::Margin::symmetric(22, 16))
+                                .fill(APP_SURFACE)
+                                .stroke(egui::Stroke::new(1.0, APP_BORDER))
+                                .corner_radius(egui::CornerRadius::same(12))
+                                .inner_margin(egui::Margin::symmetric(20, 14))
                                 .show(ui, |ui| {
                                     ui.set_min_width(ui.available_width());
                                     ui.horizontal(|ui| {
                                         draw_camera_logo(ui);
                                         ui.vertical(|ui| {
                                             ui.heading(
-                                                egui::RichText::new("HEIC → JPG")
-                                                    .size(24.0)
+                                                egui::RichText::new("Convertir des photos")
+                                                    .size(22.0)
                                                     .strong(),
                                             );
                                             ui.label(
-                                                egui::RichText::new("Convertisseur local macOS")
-                                                    .weak(),
+                                                egui::RichText::new(
+                                                    "HEIC et HEIF vers JPEG, sur ce Mac",
+                                                )
+                                                .color(APP_MUTED),
                                             );
                                         });
                                     });
@@ -195,9 +203,9 @@ impl eframe::App for Heic2JpgApp {
                         egui::Layout::top_down(egui::Align::Min),
                         |ui| {
                             egui::Frame::new()
-                                .fill(egui::Color32::WHITE)
-                                .stroke(egui::Stroke::new(1.0, BULMA_BORDER))
-                                .corner_radius(egui::CornerRadius::same(16))
+                                .fill(APP_SURFACE)
+                                .stroke(egui::Stroke::new(1.0, APP_BORDER))
+                                .corner_radius(egui::CornerRadius::same(12))
                                 .inner_margin(egui::Margin::same(18))
                                 .show(ui, |ui| {
                                     ui.set_min_width(ui.available_width());
@@ -219,7 +227,7 @@ impl eframe::App for Heic2JpgApp {
                                                 if ui
                                                     .add(
                                                         egui::Button::new("Ajouter des fichiers…")
-                                                            .fill(BULMA_PRIMARY)
+                                                            .fill(APP_ACCENT)
                                                             .stroke(egui::Stroke::NONE)
                                                             .min_size(egui::vec2(156.0, 30.0)),
                                                     )
@@ -267,13 +275,13 @@ impl eframe::App for Heic2JpgApp {
                         egui::Layout::top_down(egui::Align::Min),
                         |ui| {
                             egui::Frame::new()
-                                .fill(egui::Color32::WHITE)
-                                .stroke(egui::Stroke::new(1.0, BULMA_BORDER))
-                                .corner_radius(egui::CornerRadius::same(16))
+                                .fill(APP_SURFACE)
+                                .stroke(egui::Stroke::new(1.0, APP_BORDER))
+                                .corner_radius(egui::CornerRadius::same(12))
                                 .inner_margin(egui::Margin::same(18))
                                 .show(ui, |ui| {
                                     ui.set_min_width(ui.available_width());
-                                    ui.heading(egui::RichText::new("Réglages d’export").size(16.0));
+                                    ui.heading(egui::RichText::new("Export").size(16.0));
                                     ui.add_space(8.0);
                                     ui.horizontal(|ui| {
                                         ui.label("Dossier de sortie");
@@ -285,7 +293,7 @@ impl eframe::App for Heic2JpgApp {
                                                 .unwrap_or_else(|| "Non sélectionné".into()),
                                         );
                                         if ui
-                                            .add(egui::Button::new("Choisir…").fill(BULMA_PRIMARY))
+                                            .add(egui::Button::new("Choisir…").fill(APP_ACCENT))
                                             .clicked()
                                         {
                                             self.choose_output_dir();
@@ -319,7 +327,7 @@ impl eframe::App for Heic2JpgApp {
                             .add_enabled(
                                 !self.converting,
                                 egui::Button::new(egui::RichText::new("Convertir").strong())
-                                    .fill(BULMA_PRIMARY)
+                                    .fill(APP_ACCENT)
                                     .stroke(egui::Stroke::NONE)
                                     .min_size(egui::vec2(124.0, 34.0)),
                             )
@@ -329,13 +337,13 @@ impl eframe::App for Heic2JpgApp {
                         }
                         if !self.status.is_empty() {
                             egui::Frame::new()
-                                .fill(egui::Color32::from_rgb(239, 252, 245))
-                                .stroke(egui::Stroke::new(1.0, BULMA_PRIMARY))
+                                .fill(egui::Color32::from_rgb(232, 245, 255))
+                                .stroke(egui::Stroke::new(1.0, APP_ACCENT))
                                 .corner_radius(egui::CornerRadius::same(8))
                                 .inner_margin(egui::Margin::symmetric(10, 6))
                                 .show(ui, |ui| {
                                     ui.label(
-                                        egui::RichText::new(&self.status).color(BULMA_PRIMARY_DARK),
+                                        egui::RichText::new(&self.status).color(APP_ACCENT_DARK),
                                     );
                                 });
                         }
@@ -357,15 +365,16 @@ impl Heic2JpgApp {
     fn show_webcam_tab(&mut self, ui: &mut egui::Ui) {
         ui.add_space(14.0);
         egui::Frame::new()
-            .fill(egui::Color32::WHITE)
-            .stroke(egui::Stroke::new(1.0, BULMA_BORDER))
-            .corner_radius(egui::CornerRadius::same(18))
-            .inner_margin(egui::Margin::symmetric(24, 22))
+            .fill(APP_SURFACE)
+            .stroke(egui::Stroke::new(1.0, APP_BORDER))
+            .corner_radius(egui::CornerRadius::same(12))
+            .inner_margin(egui::Margin::symmetric(20, 18))
             .show(ui, |ui| {
                 ui.set_min_width(ui.available_width());
-                ui.heading(egui::RichText::new("WEBCAM → JPG").size(24.0).strong());
+                ui.heading(egui::RichText::new("Prendre une photo").size(22.0).strong());
                 ui.label(
-                    egui::RichText::new("Prenez une photo avec la caméra de votre Mac.").weak(),
+                    egui::RichText::new("Capture JPEG depuis la caméra de votre Mac.")
+                        .color(APP_MUTED),
                 );
                 ui.add_space(18.0);
                 ui.horizontal(|ui| {
@@ -377,7 +386,7 @@ impl Heic2JpgApp {
                             .unwrap_or_else(|| "Non sélectionné".into()),
                     );
                     if ui
-                        .add(egui::Button::new("Choisir…").fill(BULMA_PRIMARY))
+                        .add(egui::Button::new("Choisir…").fill(APP_ACCENT))
                         .clicked()
                     {
                         if let Some(dir) = FileDialog::new().pick_folder() {
@@ -390,7 +399,7 @@ impl Heic2JpgApp {
                 if ui
                     .add(
                         egui::Button::new(egui::RichText::new("Prendre une photo").strong())
-                            .fill(BULMA_PRIMARY)
+                            .fill(APP_ACCENT)
                             .stroke(egui::Stroke::NONE)
                             .min_size(egui::vec2(164.0, 36.0)),
                     )
@@ -401,7 +410,7 @@ impl Heic2JpgApp {
                 ui.add_space(14.0);
                 egui::Frame::new()
                     .fill(egui::Color32::from_rgb(248, 250, 251))
-                    .stroke(egui::Stroke::new(1.0, BULMA_BORDER))
+                    .stroke(egui::Stroke::new(1.0, APP_BORDER))
                     .corner_radius(egui::CornerRadius::same(12))
                     .inner_margin(egui::Margin::same(12))
                     .show(ui, |ui| {
@@ -435,13 +444,13 @@ impl Heic2JpgApp {
                 if !self.webcam_status.is_empty() {
                     ui.add_space(12.0);
                     egui::Frame::new()
-                        .fill(egui::Color32::from_rgb(239, 252, 245))
-                        .stroke(egui::Stroke::new(1.0, BULMA_PRIMARY))
+                        .fill(egui::Color32::from_rgb(232, 245, 255))
+                        .stroke(egui::Stroke::new(1.0, APP_ACCENT))
                         .corner_radius(egui::CornerRadius::same(8))
                         .inner_margin(egui::Margin::symmetric(10, 6))
                         .show(ui, |ui| {
                             ui.label(
-                                egui::RichText::new(&self.webcam_status).color(BULMA_PRIMARY_DARK),
+                                egui::RichText::new(&self.webcam_status).color(APP_ACCENT_DARK),
                             );
                         });
                 }
@@ -781,15 +790,15 @@ fn main() -> eframe::Result<()> {
 
 fn mac_visuals() -> egui::Visuals {
     let mut visuals = egui::Visuals::light();
-    visuals.panel_fill = egui::Color32::from_rgb(246, 247, 250);
-    visuals.window_fill = egui::Color32::from_rgb(246, 247, 250);
-    visuals.faint_bg_color = egui::Color32::from_rgb(236, 238, 243);
+    visuals.panel_fill = APP_BACKGROUND;
+    visuals.window_fill = APP_BACKGROUND;
+    visuals.faint_bg_color = egui::Color32::from_rgb(232, 232, 237);
     visuals.extreme_bg_color = egui::Color32::WHITE;
-    visuals.widgets.noninteractive.bg_fill = egui::Color32::from_rgb(245, 246, 249);
-    visuals.widgets.inactive.bg_fill = egui::Color32::from_rgb(239, 241, 246);
-    visuals.widgets.hovered.bg_fill = egui::Color32::from_rgb(226, 235, 249);
-    visuals.widgets.active.bg_fill = egui::Color32::from_rgb(211, 226, 246);
-    visuals.selection.bg_fill = egui::Color32::from_rgb(35, 112, 218);
-    visuals.hyperlink_color = egui::Color32::from_rgb(35, 112, 218);
+    visuals.widgets.noninteractive.bg_fill = egui::Color32::from_rgb(245, 245, 250);
+    visuals.widgets.inactive.bg_fill = egui::Color32::from_rgb(238, 238, 243);
+    visuals.widgets.hovered.bg_fill = egui::Color32::from_rgb(220, 235, 251);
+    visuals.widgets.active.bg_fill = egui::Color32::from_rgb(194, 220, 249);
+    visuals.selection.bg_fill = APP_ACCENT;
+    visuals.hyperlink_color = APP_ACCENT_DARK;
     visuals
 }
